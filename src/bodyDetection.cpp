@@ -8,6 +8,8 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
+#include <stdio.h>
+
 
 using namespace std;
 using namespace cv;
@@ -49,6 +51,8 @@ void detectFaceAndDisplay( cv::Mat frame )
   std::vector<Rect> faces;
   Mat faceROI;
   cvtColor( frame, faceROI, CV_BGR2GRAY );
+  
+  //equalizeHist(faceROI, faceROI);
 
   //-- Detect faces
   face_cascade.detectMultiScale( faceROI, faces, 1.3, 4, 0, Size(40, 40) );
@@ -56,12 +60,50 @@ void detectFaceAndDisplay( cv::Mat frame )
   for( size_t i = 0; i < faces.size(); i++ )
   {
     cv::rectangle(frame, cvPoint(faces[i].x, faces[i].y), cvPoint(faces[i].x + faces[i].width, faces[i].y + faces[i].height), CV_RGB(255, 0, 0), 4, 8, 0);
+    
   }
+  
   //-- Show what you got
   imshow( window_name, frame );
 }
 
+void detectFaceAndEyeAndDisplay( cv::Mat frame )
+{
+  std::vector<Rect> faces;
+  Mat faceROI;
+  cvtColor( frame, faceROI, CV_BGR2GRAY );
+  
+  //equalizeHist(faceROI, faceROI);
 
+  //-- Detect faces
+  face_cascade.detectMultiScale( faceROI, faces, 1.3, 4, 0, Size(40, 40) );
+
+  for( size_t i = 0; i < faces.size(); i++ )
+  {
+    cv::rectangle(frame, cvPoint(faces[i].x, faces[i].y), cvPoint(faces[i].x + faces[i].width, faces[i].y + faces[i].height), CV_RGB(255, 0, 0), 4, 8, 0);
+  
+    // --- Iterate over all of the faces -> find eyes to improve detection
+
+    // Find center of faces
+    Point center(faces[i].x + faces[i].width/2, faces[i].y + faces[i].height/2);
+    
+    Mat face = faceROI(faces[i]);
+    std::vector<Rect> eyes;
+    
+    // Try to detect eyes, inside each face
+    eye_cascade.detectMultiScale(frame, eyes, 1.1, 1, 0, Size(20, 20) );
+
+    // Check to see if eyes inside of face, if so, draw ellipse around face
+    if(eyes.size() > 0)
+    {
+      ellipse(frame, center, Size(faces[i].width/2, faces[i].height/2), 0, 0, 360, Scalar( 255, 0, 255 ), 4, 8, 0 );
+      printf("titi\n");
+    }
+  }
+  
+  //-- Show what you got
+  imshow( window_name, frame );
+}
 
 void detectBodyAndDisplay( cv::Mat frame )
 {

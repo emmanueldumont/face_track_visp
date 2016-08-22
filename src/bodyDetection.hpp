@@ -9,10 +9,12 @@
 
 std::string face_cascade_name = "/home/dumont/catkin_ws/src/face_track_visp/src/haarcascade_frontalface.xml";
 std::string upperBody_cascade_name = "/home/dumont/catkin_ws/src/face_track_visp/src/haarcascade_upperbody.xml";
+std::string eye_cascade_name = "/home/dumont/catkin_ws/src/face_track_visp/src/haarcascade_eye.xml";
 
 
 cv::CascadeClassifier face_cascade;
 cv::CascadeClassifier upperBody_cascade;
+cv::CascadeClassifier eye_cascade;
 
 std::string window_name = "Capture - Face detection";
 
@@ -22,3 +24,5 @@ void detectBodyAndFaceAndDisplay( cv::Mat frame );
 void detectFaceAndDisplay( cv::Mat frame );
 
 void detectBodyAndDisplay( cv::Mat frame );
+
+void detectFaceAndEyeAndDisplay( cv::Mat frame );

@@ -78,6 +78,7 @@ int main(int argc, char* argv[])
   
   if( !face_cascade.load( face_cascade_name ) ){ printf("--(!)Error loading frontal\n"); return -1; };
   if( !upperBody_cascade.load( upperBody_cascade_name ) ){ printf("--(!)Error loading upper\n"); return -1; };
+  if( !upperBody_cascade.load( eye_cascade_name ) ){ printf("--(!)Error loading eye\n"); return -1; };
   
   // ros::Subscriber sub = nh.subscribe("camera/rgb/image_raw", MY_ROS_QUEUE_SIZE, imgcb);
   ros::Subscriber sub = nh.subscribe("camera/rgb/image_color", MY_ROS_QUEUE_SIZE, imgcb);

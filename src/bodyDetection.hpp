@@ -1,8 +1,9 @@
+#ifndef BODYDETECTION_HPP
+#define BODYDETECTION_HPP
+
 #include <opencv/cv.h>
 
-//#include "opencv2/objdetect/objdetect.hpp"
-//#include "opencv2/imgproc/imgproc.hpp"
-//#include "opencv2/highgui/highgui.hpp"
+
  
 // Manages message with oroclient
 #include <string>
@@ -16,8 +17,13 @@ cv::CascadeClassifier face_cascade;
 cv::CascadeClassifier upperBody_cascade;
 cv::CascadeClassifier eye_cascade;
 
+CvMemStorage* storage;
+
+std::vector<cv::Rect> gRois;
+
 std::string window_name = "Capture - Face detection";
 
+void trackDetection( cv::Mat frame, std::vector<cv::Rect> rois);
 
 void detectBodyAndFaceAndDisplay( cv::Mat frame );
 
@@ -26,3 +32,5 @@ void detectFaceAndDisplay( cv::Mat frame );
 void detectBodyAndDisplay( cv::Mat frame );
 
 void detectFaceAndEyeAndDisplay( cv::Mat frame );
+
+#endif

@@ -4,15 +4,67 @@
 
 #include <opencv/cv.h>
 
-#include "opencv2/objdetect/objdetect.hpp"
-#include <opencv2/imgproc/imgproc.hpp>
+//#include <opencv2/objdetect/objdetect.hpp>
+//#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
+//#include <opencv2/features2d/features2d.hpp>
+#include <opencv2/legacy/legacy.hpp>
+
+#include <opencv2/core/core.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/legacy/legacy.hpp>
 
 #include <stdio.h>
 
-
 using namespace std;
 using namespace cv;
+
+void trackDetection( cv::Mat frame, std::vector<cv::Rect> rois)
+{
+  Mat outFrame;
+  SurfFeatureDetector surf( 2500 );
+  vector<KeyPoint> keypoints1;
+  Mat descriptors1;
+  SurfDescriptorExtractor surfDesc;
+  
+  surf.detect(frame, keypoints1);
+  drawKeypoints(frame, keypoints1, outFrame, Scalar(255,255,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+  surfDesc.compute(frame, keypoints1, descriptors1);
+  
+  
+  namedWindow("Matched");
+  
+  for( size_t cpt = 0; cpt < gRois.size(); cpt++ )
+  {
+    
+    Mat outRoi;
+    Mat frameROI = Mat(frame,gRois[cpt]);
+
+    // vector of keypoints
+    vector<KeyPoint> keypoints2;
+    
+    surf.detect(frameROI, keypoints2);
+    
+    drawKeypoints(frameROI, keypoints2, outRoi, Scalar(255,255,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
+    
+    Mat descriptors2;
+    surfDesc.compute(frameROI, keypoints2, descriptors2);
+
+    BruteForceMatcher<L2<float> > matcher;
+    vector<DMatch> matches;
+    matcher.match(descriptors1, descriptors2, matches);
+
+    nth_element(matches.begin(), matches.begin()+24, matches.end());
+    matches.erase(matches.begin()+25, matches.end());
+
+    Mat imageMatches;
+    drawMatches(frame, keypoints1, frameROI, keypoints2, matches, imageMatches, Scalar(255,255,255));
+
+    imshow("Matched", imageMatches);
+  }
+  gRois = rois;
+}
 
 void detectBodyAndFaceAndDisplay( cv::Mat frame )
 {
@@ -60,8 +112,10 @@ void detectFaceAndDisplay( cv::Mat frame )
   for( size_t i = 0; i < faces.size(); i++ )
   {
     cv::rectangle(frame, cvPoint(faces[i].x, faces[i].y), cvPoint(faces[i].x + faces[i].width, faces[i].y + faces[i].height), CV_RGB(255, 0, 0), 4, 8, 0);
-    
   }
+  
+  if(faces.size() > 0) 
+    trackDetection(frame, faces);
   
   //-- Show what you got
   imshow( window_name, frame );

@@ -6,6 +6,8 @@ find_package(catkin REQUIRED COMPONENTS roscpp std_msgs sensor_msgs cv_bridge)
 
 find_package(OpenCV)
 
+add_definitions( -DWITH_OPENCL=OFF -DBUILD_opencv_nonfree=ON )
+
 catkin_package(
    INCLUDE_DIRS include
 )

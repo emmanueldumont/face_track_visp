@@ -19,16 +19,14 @@
 #include "opencv2/objdetect/objdetect.hpp"
 #include <opencv2/imgproc/imgproc.hpp>
 
+#include <opencv2/nonfree/nonfree.hpp>
+
 #include "bodyDetection.hpp"
 
 using namespace std;
 using namespace cv;
 
 static const uint32_t MY_ROS_QUEUE_SIZE = 1000;
-
-RNG rng(12345);
-
-static CvMemStorage *storage;
 
 
 // Create a function which manages a clean "CTRL+C" command -> sigint command
@@ -38,6 +36,8 @@ void sigint_handler(int dummy)
     
     // Liberation de l'espace memoire
     cv::destroyWindow(window_name);
+    cv::destroyWindow("surf");
+    cv::destroyWindow("Matched");
 
     ROS_INFO("\n\n... Bye bye !\n\t-Manu\n");
     exit(EXIT_SUCCESS); // Shut down the program
@@ -73,6 +73,8 @@ int main(int argc, char* argv[])
 
   ros::NodeHandle nh;
   
+  initModule_nonfree();  
+  
   // Override the signal interrupt from ROS
   signal(SIGINT, sigint_handler);
   
@@ -80,6 +82,8 @@ int main(int argc, char* argv[])
   if( !upperBody_cascade.load( upperBody_cascade_name ) ){ printf("--(!)Error loading upper\n"); return -1; };
   if( !upperBody_cascade.load( eye_cascade_name ) ){ printf("--(!)Error loading eye\n"); return -1; };
   
+  storage = cvCreateMemStorage(0);
+    
   // ros::Subscriber sub = nh.subscribe("camera/rgb/image_raw", MY_ROS_QUEUE_SIZE, imgcb);
   ros::Subscriber sub = nh.subscribe("camera/rgb/image_color", MY_ROS_QUEUE_SIZE, imgcb);
 

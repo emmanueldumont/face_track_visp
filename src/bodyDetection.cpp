@@ -1,13 +1,12 @@
 #include "bodyDetection.hpp"
 
 #include <iostream>
+#include <ctype.h>
+#include <stdio.h>
 
 #include <opencv/cv.h>
 
-//#include <opencv2/objdetect/objdetect.hpp>
-//#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
-//#include <opencv2/features2d/features2d.hpp>
 #include <opencv2/legacy/legacy.hpp>
 
 #include <opencv2/core/core.hpp>
@@ -15,12 +14,94 @@
 #include <opencv2/nonfree/features2d.hpp>
 #include <opencv2/legacy/legacy.hpp>
 
-#include <stdio.h>
+#include "opencv2/video/tracking.hpp"
+
 
 using namespace std;
 using namespace cv;
 
-void trackDetection( cv::Mat frame, std::vector<cv::Rect> rois)
+
+void drawOptFlowMap(const cv::Mat& flow, cv::Mat& cflowmap, int step, const cv::Scalar& color)
+{
+  namedWindow( "Matched", 1 );
+  
+	// Beautiful drawing for visualization purposes
+    for(int y = 0; y < cflowmap.rows; y += step)
+        for(int x = 0; x < cflowmap.cols; x += step)
+        {
+            const cv::Point2f& fxy = flow.at<cv::Point2f>(y, x) ; // flow magnitude at that point
+            line(cflowmap, cv::Point(x,y), cv::Point(cvRound(x+fxy.x), cvRound(y+fxy.y)),
+                 color);
+            //circle(cflowmap, cv::Point(x,y), 2, color, -1);
+        }
+}
+
+
+void trackDetectionOpticalFlow(cv::Mat frame)
+{
+  VideoCapture cap;
+  TermCriteria termcrit(TermCriteria::COUNT|TermCriteria::EPS,20,0.03);
+  Size subPixWinSize(10,10), winSize(31,31);
+
+  const int MAX_COUNT = 500;
+
+  namedWindow( "track", 1 );
+
+  Mat gray, image;
+  
+  frame.copyTo(image);
+  cvtColor(image, gray, COLOR_BGR2GRAY);
+  
+  if(!gPrevFrame.empty())
+  {
+    do
+    {
+      if( !points[0].empty() )
+      {
+          vector<uchar> status;
+          vector<float> err;
+          if(gPrevGray.empty())
+              gray.copyTo(gPrevGray);
+          calcOpticalFlowPyrLK(gPrevGray, gray, points[0], points[1], status, err, winSize, 3, termcrit, 0, 0.001);
+          size_t i, k;
+          for( i = k = 0; i < points[1].size(); i++ )
+          {
+              
+              if( !status[i] )
+                  continue;
+
+              points[1][k++] = points[1][i];
+              circle( image, points[1][i], 3, Scalar(0,255,0), -1, 8);
+          }
+          points[1].resize(k);
+      }
+
+      if( addRemovePt && points[1].size() < (size_t)MAX_COUNT )
+      {
+          vector<Point2f> tmp;
+          tmp.push_back(point);
+          cornerSubPix( gray, tmp, winSize, Size(-1,-1), termcrit);
+          points[1].push_back(tmp[0]);
+          addRemovePt = false;
+      }
+
+      imshow("track", image);
+    }while(0);
+  }
+  else
+  {
+    // automatic initialization
+    goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
+    cornerSubPix(gray, points[1], subPixWinSize, Size(-1,-1), termcrit);
+    addRemovePt = false;
+  }
+  
+  std::swap(points[1], points[0]);
+  cv::swap(gPrevGray, gray);
+  cv::swap(gPrevFrame, frame);
+}
+
+void trackDetectionSurf( cv::Mat frame, std::vector<cv::Rect> rois)
 {
   Mat outFrame;
   SurfFeatureDetector surf( 2500 );
@@ -115,7 +196,7 @@ void detectFaceAndDisplay( cv::Mat frame )
   }
   
   if(faces.size() > 0) 
-    trackDetection(frame, faces);
+    trackDetectionOpticalFlow(frame);
   
   //-- Show what you got
   imshow( window_name, frame );

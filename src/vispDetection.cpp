@@ -36,7 +36,7 @@ void sigint_handler(int dummy)
     
     // Liberation de l'espace memoire
     cv::destroyWindow(window_name);
-    cv::destroyWindow("surf");
+    cv::destroyWindow("track");
     cv::destroyWindow("Matched");
 
     ROS_INFO("\n\n... Bye bye !\n\t-Manu\n");

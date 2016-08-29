@@ -54,46 +54,38 @@ void trackDetectionOpticalFlow(cv::Mat frame)
   
   if(!gPrevFrame.empty())
   {
-    do
+    if( !points[0].empty() )
     {
-      if( !points[0].empty() )
+      vector<uchar> status;
+      vector<float> err;
+      if(gPrevGray.empty())
+          gray.copyTo(gPrevGray);
+      calcOpticalFlowPyrLK(gPrevGray, gray, points[0], points[1], status, err, winSize, 3, termcrit, 0, 0.001);
+      size_t i, k;
+      for( i = k = 0; i < points[1].size(); i++ )
       {
-          vector<uchar> status;
-          vector<float> err;
-          if(gPrevGray.empty())
-              gray.copyTo(gPrevGray);
-          calcOpticalFlowPyrLK(gPrevGray, gray, points[0], points[1], status, err, winSize, 3, termcrit, 0, 0.001);
-          size_t i, k;
-          for( i = k = 0; i < points[1].size(); i++ )
-          {
-              
-              if( !status[i] )
-                  continue;
+          
+          if( !status[i] )
+              continue;
 
-              points[1][k++] = points[1][i];
-              circle( image, points[1][i], 3, Scalar(0,255,0), -1, 8);
-          }
-          points[1].resize(k);
+          points[1][k++] = points[1][i];
+          //circle( image, points[1][i], 3, Scalar(0,255,0), -1, 8);
+          CvPoint p, q;
+          p.x = 1; p.y = 1; q.x = 2; q.y = 2;
+          CvScalar line_color = CV_RGB(0, 255, 0);
+          line(image,points[0][i],points[1][i], line_color, 3, CV_AA, 0);
       }
+      points[1].resize(k);
+      
+    }
 
-      if( addRemovePt && points[1].size() < (size_t)MAX_COUNT )
-      {
-          vector<Point2f> tmp;
-          tmp.push_back(point);
-          cornerSubPix( gray, tmp, winSize, Size(-1,-1), termcrit);
-          points[1].push_back(tmp[0]);
-          addRemovePt = false;
-      }
-
-      imshow("track", image);
-    }while(0);
+    imshow("track", image);
   }
   else
   {
     // automatic initialization
     goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
     cornerSubPix(gray, points[1], subPixWinSize, Size(-1,-1), termcrit);
-    addRemovePt = false;
   }
   
   std::swap(points[1], points[0]);

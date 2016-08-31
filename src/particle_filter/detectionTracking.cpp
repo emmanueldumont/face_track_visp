@@ -70,6 +70,7 @@ void detectFaceAndDisplay( cv::Mat frame )
   {
     if((nbFrame == RESET_FRAME_NUMBER))
     {
+      float norm = getNorm();
       initMainParticleFilter(frame, faces[0]);
       nbFrame=0;
     }

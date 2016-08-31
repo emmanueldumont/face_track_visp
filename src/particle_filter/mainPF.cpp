@@ -253,29 +253,73 @@ bool use_camera;
 StateData d(NUM_PARTICLES, 0);
 State state = state_start;
 
-int getNorm(cv::Mat frame)
+float getNorm()
 {
-  if( (!d.estimRect.empty()) && (!d.rect.empty()) )
+  if( (d.estimRect.width != 0) && (d.selection.width != 0) )
   {
-    float norm, x2 ,y2 ,z2;
-    int sEstim, sRect;
-    Mat draw;
-    Point pt1, pt2;
+    double norm, x2 ,y2 ,z2;
+    double sEstim, sRect; // Surface area of the two rectangles
     
-    x2 = (d.estimRect.x-d.rect.x)/d.image.cols;
-    y2 = (d.estimRect.y-d.rect.y)/d.image.rows;
+    // Quantity of movement done in X and Y (%)
+    x2 = ((d.estimRect.x) - (d.selection.x))/d.image.cols;
+    y2 = ((d.estimRect.y) - (d.selection.y))/d.image.rows;
     
+    // Determine the quantity of movment in Y (%)
     sEstim = d.estimRect.width * d.estimRect.height;
-    sRect = d.rect.width * d.rect.height;
+    sRect = d.selection.width * d.selection.height;
     z2 = (sEstim - sRect) / (d.image.cols*d.image.rows);
     
-    x2 = pow (d.estimRect.x-d.rect.x, 2.0);
-    y2 = pow (d.estimRect.y-d.rect.y, 2.0);
-    z2 = pow (d.estimRect.z-d.rect.z, 2.0);
+    cout << endl << "d.estimRect.x: "<< d.estimRect.x <<" d.estimRect.y: "<< d.estimRect.y << endl;
+    cout << "d.selection.x: "<< d.selection.x <<" d.selection.y: "<< d.selection.y << endl;
+    cout << "x: "<< x2 <<" y: "<< y2 <<" z: "<< z2 << endl;
     
-    norm = sqrt(x2+y2+z2) * 100;
+    if(z2 >= 0)
+    {
+      cout << "Human closed in on the camera, ";
+      if(y2 >= 0)
+      {
+        cout << "descended ";
+        if(x2 < 0)
+          cout << "from left to right." << endl;
+        else
+          cout << "from right to left." << endl;
+          
+      }else
+      {
+        cout << "ascended ";
+        if(x2>=0)
+          cout << "from left to right." << endl;
+        else
+          cout << "from right to left." << endl;
+      }
+    } else
+    {
+      cout << "Human backed off the camera, ";
+      if(y2 >= 0)
+      {
+        cout << "ascended ";
+        if(x2>=0)
+          cout << "from left to right." << endl;
+        else
+          cout << "from right to left." << endl;
+          
+      }else
+      {
+        cout << "descended ";
+        if(x2>=0)
+          cout << "from left to right." << endl;
+        else
+          cout << "from right to left." << endl;
+      }
+    }
     
-    line(draw, pt1, pt2, MAGENTA, 1, 8,0);
+    
+    // norm = (x²+y²+z²)⁰⁵ * 100 ; (%)
+    x2 = pow (d.estimRect.x-d.selection.x, 2.0);
+    y2 = pow (d.estimRect.y-d.selection.y, 2.0);
+    z2 = pow (z2, 2.0);
+    
+    norm = sqrt(x2+y2+z2)*100;
     
     return norm;
   }
